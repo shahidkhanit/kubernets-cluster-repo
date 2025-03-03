@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-app
+  labels:
+    app: student-app
+spec:
+  replicas: 2  # High availability ke liye 2 pods
+  selector:
+    matchLabels:
+      app: student-app
+  template:
+    metadata:
+      labels:
+        app: student-app
+    spec:
+      containers:
+        - name: student-app
+          image: shahidkhan777/student-app:latest  # Tumhara Docker Hub image
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_HOST
+              value: "mysql-service"  # MySQL service ka naam
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASSWORD
+              value: "password"
+            - name: DB_NAME
+              value: "studentdb"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-app-service
+spec:
+  selector:
+    app: student-app
+  type: NodePort  # Bahar se access karne ke liye
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 32000  # Access: <NodeIP>:32000

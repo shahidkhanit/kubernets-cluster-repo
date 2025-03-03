@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-mysql
+  labels:
+    app: student-mysql
+spec:
+  replicas: 1  # Database ke liye 1 pod
+  selector:
+    matchLabels:
+      app: student-mysql
+  template:
+    metadata:
+      labels:
+        app: student-mysql
+    spec:
+      containers:
+        - name: student-mysql
+          image: shahidkhan777/student-mysql:latest  # Tumhara Docker Hub image
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "password"
+            - name: MYSQL_DATABASE
+              value: "studentdb"
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql  # Data ko persist karne ke liye
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: student-mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+  clusterIP: None  # Headless service for direct communication
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/mysql  # Local path for data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
